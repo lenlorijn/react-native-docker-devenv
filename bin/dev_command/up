@@ -1,3 +1,5 @@
+export EXPO_PACKAGER_HOSTNAME="$(ip -4 addr show eth0 | grep -Po 'inet \K[\d.]+')"
+echo "Using $EXPO_PACKAGER_HOSTNAME as external IP"
 dc mode 'up --no-recreate';
 dc cmd "$*";
 

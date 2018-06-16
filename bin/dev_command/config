@@ -1,0 +1,4 @@
+
+dc mode config;
+dc cmd "$*";
+

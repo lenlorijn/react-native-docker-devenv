@@ -7,6 +7,8 @@ services:
       - .:/usr/app
     working_dir: /usr/app
     command: sh ./docker/node/dev.sh
+    environment:
+      - EXPO_PACKAGER_HOSTNAME
     ports:
       - 19000:19000
       - 19001:19001
