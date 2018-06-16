@@ -1,0 +1,126 @@
+#!/bin/bash
+
+init() {
+
+    DEV_SELF=$(basename $0);
+
+    DEV_DIR=$(realpath $(dirname $0));
+    DEV_WORKDIR=$(dirname ${DEV_DIR});
+    DEV_PROJECT=$(basename ${DEV_WORKDIR});
+    DEV_USERDIR=${PWD};
+
+    DEV_COMMANDDIR=${DEV_DIR}/dev_command;
+
+    DEV_WORKSPACE="`echo ${DEV_WORKDIR}/src | sed -e 's/\\//\\\\\//g'`";
+    DEV_PROJECTDIR=`echo ${DEV_USERDIR} | sed -e "s/${DEV_WORKSPACE}\///"`;
+
+    DEV_SUDO='';
+    if [ -z "`groups | grep docker`" ]; then
+        DEV_SUDO='sudo';
+    fi
+
+    dc yml 'docker-compose.yml';
+    dc yml_if 'docker-custom.yml' 'docker-custom.yml';
+
+    dc mode 'run --rm';
+
+    DEV_DOCKEROPTS='';
+    DEV_COMMAND=$1;
+
+    # Change to command directory
+    # This is so all docker-compose commands work out of the box
+    cd ${DEV_COMMANDDIR};
+
+    # Check if command exists and is executable
+    DEV_EXISTS=false;
+    if [ -n "${DEV_COMMAND}" ] && [ -f "${DEV_COMMAND}" ]; then
+        DEV_EXISTS=true;
+    fi
+}
+
+dc() {
+
+    show() {
+        echo `getsudo`docker-compose ${DEV_YML} ${DEV_MODE} \
+            ${DEV_DOCKEROPTS} \
+            ${DEV_SERVICE} \
+            "${DEV_CMD}";
+    }
+
+    getsudo() {
+        # Check if user is in docker group
+        [ -n "${DEV_SUDO}" ] && echo -n ${DEV_SUDO}' ';
+    }
+
+    run() {
+        cmd=`show`;
+        ${cmd};
+        return $?
+    }
+
+    opt() {
+        DEV_DOCKEROPTS=${DEV_DOCKEROPTS}' '$*;
+    }
+
+    service() {
+        DEV_SERVICE=$*;
+    }
+
+    yml_if() {
+        local yml=$1;
+        shift;
+
+        while [ -n "$1" ]; do
+            if [ ! -e ${DEV_WORKDIR}/$1 ]; then
+                return 1;
+            fi
+            shift;
+        done
+
+        yml ${yml};
+        return 0;
+    }
+
+    yml() {
+        if [ -n "`echo $DEV_YML | grep $1`" ]; then
+            return;
+        fi
+        DEV_YML=${DEV_YML}' -f '${DEV_WORKDIR}'/'$1;
+    }
+
+    mode() {
+        DEV_MODE=$*;
+    }
+
+    cmd() {
+        DEV_CMD="$*";
+    }
+
+    $*;
+    return $?
+}
+
+usage() {
+    echo "Usage ${DEV_SELF} ["`ls`"]";
+    exit 1;
+}
+
+exec() {
+    # Load command
+    # Can exit if implemented itself
+    . ./${DEV_COMMAND} $*;
+
+    # Execute command
+    dc run;
+    exit $?;
+}
+
+
+main() {
+    init $@;
+    shift;
+
+    ${DEV_EXISTS} && exec $@ || usage;
+}
+
+main $@;

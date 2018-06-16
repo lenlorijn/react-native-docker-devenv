@@ -1,0 +1,5 @@
+
+echo "test";
+dc mode 'up -d --no-recreate';
+dc cmd "$*";
+

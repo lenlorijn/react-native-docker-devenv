@@ -1,0 +1,4 @@
+
+dc mode logs;
+dc cmd "$*";
+
