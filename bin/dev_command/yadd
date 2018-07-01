@@ -1,0 +1,5 @@
+
+dc service node;
+dc opt '-w /usr/app/src/';
+dc opt "-u $(id -u):$(id -g)"
+dc cmd yarn "add $* --save";
