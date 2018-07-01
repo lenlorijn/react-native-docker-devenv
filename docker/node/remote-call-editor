@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo "Arguments: $@"
+
+REMOTE_CALL_HOST="$(ip -4 addr show eth0 | grep -Po 'inet \K[\d.]+')"
+
+echo "Calling ${REMOTE_CALL_HOST}:8091?message=$@";
+wget -q "http://${REMOTE_CALL_HOST}:8091/?message=$@"
+
